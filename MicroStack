@@ -1,0 +1,82 @@
+
+MicroStack ist eine reine Upstream-OpenStack-Distribution, die für kleine und Edge-Bereitstellungen entwickelt wurde und mit minimalem Aufwand installiert und gewartet werden kann.
+Die offizielle OpenStack-Website beschreibt das Projekt als "ein Cloud-Betriebssystem, das große Pools von Rechen-, Speicher- und Netzwerkressourcen in einem Rechenzentrum steuert, die alle über APIs mit gemeinsamen Authentifizierungsmechanismen verwaltet und bereitgestellt werden".  Es handelt  sich um eine Open-Source-Plattform, die als private (oder öffentliche) Cloud fungieren kann. Normalerweise wird OpenStack auf einer Flotte von produktionsfähigen Servern in einem Rechenzentrum (oder mehreren Rechenzentren) eingesetzt.  Stattdessen deployen wir MicroStack auf Ubuntu direkt.
+OpenStack besteht aus einer Sammlung von Komponenten, die als Dienste bezeichnet werden und selektiv eingesetzt werden können, um APIs für den Zugriff auf verschiedene Arten von Infrastrukturressourcen bereitzustellen, über die Sie sich auf der offiziellen Website informieren können. Unter anderem aus diesem Grund ist die Bereitstellung von OpenStack keine triviale Aufgabe.
+MicroStack ist die einfache und zugängliche OpenStack-Distribution von Canonical, ähnlich wie Ubuntu eine einfache und zugängliche Linux-Distribution für den durchschnittlichen Benutzer ist (ebenfalls von Canonical angeboten). Gleich werden wir sehen, dass die Installation von MicroStack so einfach ist wie die Ausführung eines einzigen Snap-Install-Befehls, und die Initialisierung für die Verwendung ist ebenso einfach und erfordert ebenfalls nur einen einzigen Befehl.
+
+Anforderungen:
+
+Sie benötigen einen Multi-Core-Prozessor, mindestens 8 GiB Arbeitsspeicher und 100 GiB Festplattenspeicher. 
+MicroStack wurde auf x86-basierten physischen und virtuellen (KVM) Maschinen getestet, 
+auf denen entweder Ubuntu 18.04 LTS oder Ubuntu 20.04 LTS läuft.
+
+Installation mit dem MicroStack snap:
+
+$ sudo snap install microstack --beta
+
+$ snap list microstack
+
+$ sudo microstack init --auto --control
+
+Initialize:
+$ microstack launch cirros --name test
+
+
+Your VM is up and running now. You should see a message like:
+
+
+Access your server with : ssh -i /home/ubuntu/snap/microstack/common/.ssh/id_microstack cirros@10.20.20.3
+
+
+Nun probiere ich ein Ubuntu image anstatt eines CirrOS image zu benutzen:
+
+$ microstack.openstack image create --help
+
+$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-disk-kvm.img
+
+Create:
+
+$ microstack.openstack image create ubuntu-focal \
+  --disk-format qcow2 \
+  --file focal-server-cloudimg-amd64-disk-kvm.img \
+  --public
+
+Check Creation:
+
+$ microstack.openstack image list -f json
+[
+  {
+    "ID": "98a4eb3d-5965-4954-98eb-1ae7f589ce68",
+    "Name": "cirros",
+    "Status": "active"
+  },
+  {
+    "ID": "6ff67cd2-02b5-4fa2-baf9-65865e8a9b6b",
+    "Name": "ubuntu-focal",
+    "Status": "active"
+  }
+]
+
+
+Create Custom Flavor:
+
+$ microstack.openstack flavor create m1.ubu \
+  --vcpus 4 \
+  --ram 8192 \
+  --disk 80
+
+
+Lets Launch Creation:
+
+
+$ microstack launch ubuntu-focal \
+  -n my-ubu-ubuntu \
+  -f m1.ubu
+
+Create Snapshots:
+
+$ microstack.openstack server stop my-ubu-ubuntu
+
+$ microstack.openstack server image create my-ubu-ubuntu \
+  --name test-com
+
